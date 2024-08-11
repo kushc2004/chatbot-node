@@ -488,6 +488,7 @@ const Chatbot = () => {
       padding: 10px;
       border-top: 1px solid #e0e0e0;
       background-color: #f7f7f7;
+      color: #333;
     }
     .chatbot-input input {
       flex: 1;
@@ -520,6 +521,7 @@ const Chatbot = () => {
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      color: rgb(71 85 105);
     }
     .chatbot-footer button.active {
       background-color: #4a90e2;
