@@ -3,10 +3,10 @@ import Chatbot from '@/components/chatbot';
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div>
-        <Chatbot/>
+    <div className=''>
+      <div className='container mt-20'>
       </div>
-    </main>
+      <Chatbot/>
+    </div>
   );
 }
