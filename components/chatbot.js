@@ -523,7 +523,7 @@ const Chatbot = () => {
     }
     .chatbot-footer button.active {
       background-color: #4a90e2;
-      color: white;
+      color: rgb(71 85 105);
     }
     .chatbot-footer button:hover {
       background-color: #007bff;
