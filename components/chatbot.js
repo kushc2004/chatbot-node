@@ -406,7 +406,7 @@ const Chatbot = () => {
       position: fixed;
       bottom: 80px;
       right: 20px;
-      width: 400px;
+      width: 300px;
       height: 600px;
       background-color: #fff;
       border-radius: 8px;
