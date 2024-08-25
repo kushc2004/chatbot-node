@@ -393,8 +393,8 @@ const Chatbot = () => {
       position: fixed;
       bottom: 20px;
       right: 20px;
-      width: 60px;
-      height: 60px;
+      width: 80px;
+      height: 80px;
       cursor: pointer;
       z-index: 1000;
     }
@@ -404,7 +404,7 @@ const Chatbot = () => {
     }
     .chatbot-container {
       position: fixed;
-      bottom: 80px;
+      bottom: 100px;
       right: 20px;
       width: 350px;
       height: 600px;
