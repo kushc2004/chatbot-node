@@ -382,33 +382,27 @@ const Chatbot = () => {
     <>
       {!isOpen && isMessageBoxOpen && (
         <div className="message-box">
-          <div>
-            <div className="message-header">
-              <span className="message-text">
-                Welcome to Xellerates AI!
-                <br></br>
-              </span>
-              <span className="message-text">
-                Global platform for startups to be investment ready through our AI model
-                <br></br>
-              </span>
-              <span className="message-subtext">
-                How can we help you? Feel free to ask anything.
-              </span>
-              <button className="close-btn1" onClick={() => setIsMessageBoxOpen(false)}>×</button>
-            </div>
-            <div className="message-input-box">
-              <input
-                type="text"
-                placeholder="Enter your message..."
-                value={messageBoxInput}
-                onClick={handleInputClick}
-                onChange={(e) => setMessageBoxInput(e.target.value)}
-              />
-            </div>
-          </div>
-        
+        <div className="message-header">
+          <span className="message-text">Welcome to Xellerates AI!</span>
+          <span className="message-subtext">
+          Xellerates AI is a Global platform for startups to be investment ready through our AI model.
+          </span>
+          <span className="message-subtext">
+          How can we help you? Feel free to ask anything.
+          </span>
+          <button className="close-btn" onClick={() => setIsMessageBoxOpen(false)}>×</button>
         </div>
+        <div className="message-input-box">
+          <input
+            type="text"
+            placeholder="Enter your message..."
+            value={messageBoxInput}
+            onClick={handleInputClick}
+            onChange={(e) => setMessageBoxInput(e.target.value)}
+          />
+        </div>
+      </div>
+      
       
       )}
 
@@ -478,45 +472,46 @@ const Chatbot = () => {
       <style jsx>{`
 .message-box {
   position: fixed;
-  bottom: 120px;
+  bottom: 100px;
   right: 20px;
   width: 350px;
   background-color: #ffffff;
   border-radius: 10px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   z-index: 1000;
   padding: 20px;
   border: 1px solid #e0e0e0;
+  font-family: 'Roboto', sans-serif;
 }
 
 .message-header {
   position: relative;
   margin-bottom: 15px;
+  color: #004e98;
 }
 
 .message-text {
   display: block;
   font-size: 16px;
-  font-weight: 500;
-  color: #333333;
-  margin-bottom: 15px;
+  font-weight: 600;
+  color: #004e98;
+  margin-bottom: 10px;
 }
 
 .message-subtext {
   display: block;
-  font-size: 16px;
-  font-weight: 500;
-  color: #333333;
-  margin-bottom: 12px;
+  font-size: 14px;
+  color: #2f2f2f;
+  margin-bottom: 20px;
 }
 
 .message-input-box {
   display: flex;
   align-items: center;
-  background-color: #f9f9f9;
+  background-color: #f5f8fa;
   border-radius: 25px;
   padding: 2px 15px;
-  border: 1px solid #ddd;
+  border: 1px solid #ccd6dd;
 }
 
 .message-input-box input {
@@ -527,6 +522,7 @@ const Chatbot = () => {
   font-size: 14px;
   background-color: transparent;
   outline: none;
+  color: #004e98;
 }
 
 .close-btn1 {
@@ -535,14 +531,15 @@ const Chatbot = () => {
   right: -10px;
   background: none;
   border: none;
-  color: #131313;
+  color: #004e98;
   font-size: 20px;
   cursor: pointer;
 }
 
 .close-btn1:hover {
-  color: #333333;
+  color: #00274d;
 }
+
 
 
 .chatbot-icon {
