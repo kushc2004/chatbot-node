@@ -634,6 +634,15 @@ const Chatbot = () => {
           font-size: 14px;
         }
 
+        .chatbot-input button {
+      padding: 10px 15px;
+      background-color: #4a90e2;
+      color: white;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+    }
+
         .chatbot-footer {
           display: flex;
           border-top: 1px solid #e0e0e0;
