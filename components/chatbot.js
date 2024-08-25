@@ -43,90 +43,67 @@ const Chatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [chatHistory, setChatHistory] = useState([]);
-  const [activeTab, setActiveTab] = useState("home");
   const [stage, setStage] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
   const messageEndRef = useRef(null);
-  const [conversation, setConversation] = useState([]);
-  const [conversationStage, setConversationStage] = useState("initial");
-  const [userEmail, setUserEmail] = useState("");
-  const [userType, setUserType] = useState("");
-  const [startupStage, setStartupStage] = useState("");
+  const [isMessageBoxOpen, setIsMessageBoxOpen] = useState(true);
+  const [messageBoxInput, setMessageBoxInput] = useState("");
+  const [activeTab, setActiveTab] = useState("messages"); // Ensure the chat section is active by default
 
+  useEffect(() => {
+    if (isOpen && chatHistory.length === 0) {
+      const initialGreetingMessage = {
+        role: "model",
+        parts: [{
+          text: "Hello, <br> How are you doing today? Welcome to Xellerates AI! I am Zephyr, your personal Investment Banker. (I am an AI, trained for your fundraising journey). <br><br> Are you an existing customer? Yes or No"
+        }]
+      };
+      setChatHistory([initialGreetingMessage]);
+      setStage("waitingForCustomerStatus");
+    }
+  }, [isOpen]);
 
+  const handleInputClick = () => {
+    setIsOpen(true);  // Open the chatbox
+    setActiveTab("messages");  // Set the active tab to messages
+    setIsMessageBoxOpen(false);  // Close the popup box
+    if (chatHistory.length === 0) {
+      const initialGreetingMessage = {
+        role: "model",
+        parts: [{
+          text: "Hello, <br> How are you doing today? Welcome to Xellerates AI! I am Zephyr, your personal Investment Banker. (I am an AI, trained for your fundraising journey). <br><br> Are you an existing customer? Yes or No"
+        }]
+      };
+      setChatHistory([initialGreetingMessage]);
+      setStage("waitingForCustomerStatus");
+    }
+  };
 
   const toggleChatbot = () => {
     setIsOpen(!isOpen);
     if (!isOpen) {
-      // Opening the chatbot
-      setChatHistory([]); // Reset chat history when opening the chatbot
-      setStage("initialGreeting"); // Set the initial stage when opening the chatbot
-  
-      // Send initial greeting message directly to chat history without user input
-      const initialGreetingMessage = {
-        role: "model",
-        parts: [{
-          text: "How are you doing today? Welcome to Xellerates AI! I am Zephyr, your personal Investment Banker. (I am an AI, trained for your fundraising journey). Are you an existing customer? Yes or No"
-        }]
-      };
-      setChatHistory([initialGreetingMessage]);
-      setStage("waitingForCustomerStatus"); // Move to the next stage
-    } else {
-      // Closing the chatbot
+      setIsMessageBoxOpen(false); // Hide the message box when the chatbot is opened
+      setChatHistory([]); // Clear history if the chatbot is being opened
       setStage(null); // Reset stage when closing the chatbot
     }
   };
-
-
-  const TypingIndicator = () => (
-    <div className="typing-indicator">
-      <span>.</span>
-      <span>.</span>
-      <span>.</span>
-      <style jsx>{`
-        .typing-indicator {
-          display: inline-block;
-          font-size: 18px;
-          line-height: 18px;
-          color: #333;
-          opacity: 0.75;
-          animation: typing 1s steps(3, end) infinite;
-        }
-  
-        .typing-indicator span {
-          animation: blink 1.4s infinite both;
-        }
-  
-        @keyframes typing {
-          from { width: 0; }
-          to { width: 3em; }
-        }
-  
-        @keyframes blink {
-          0% { opacity: 0.2; }
-          20% { opacity: 1; }
-          100% { opacity: 0.2; }
-        }
-      `}</style>
-    </div>
-  );
-  
 
   const sendMessage = async (inputMessage) => {
     if (!inputMessage || typeof inputMessage !== 'string') {
       return; // Avoid processing if there is no valid input message
     }
-  
+
     const userMessage = { role: "user", parts: [{ text: inputMessage }] };
     setMessage(""); // Clear the message input immediately
     setIsTyping(true); // Show typing indicator
-  
+
     try {
       const messagesHistory = [...chatHistory, userMessage];
+      console.log("Message History: ", messagesHistory);
       setChatHistory(messagesHistory);
-  
+
       let botResponseText;
-  
+
       switch (stage) {
         case "waitingForCustomerStatus":
           if (inputMessage.toLowerCase() === "yes") {
@@ -140,9 +117,24 @@ const Chatbot = () => {
           }
           break;
         case "waitingForEmail":
-          botResponseText = "Great! Do you have any questions for me?";
-          //setStage("waitingForQuestions");
-          setStage("awaitingQuestion");
+          const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (emailPattern.test(inputMessage)) {
+            botResponseText = "Great! Do you have any questions for me?";
+            const botMessageWithButtons = {
+              role: "model",
+              parts: [{ text: botResponseText }],
+              buttons: [
+                { label: "Continue to chat with Zephyr", action: "continueChat", icon: "/assets/images/chat/zephyr.png" },
+                { label: "Talk to customer care on WhatsApp", action: "customerCare", icon: "/assets/images/chat/whatsapp.png" }
+              ]
+            };
+            setChatHistory((prevChatHistory) => [...prevChatHistory, botMessageWithButtons]);
+            setIsTyping(false);
+            return;
+          } else {
+            botResponseText = "Please enter a valid email address.";
+            setStage("waitingForEmail"); // Stay in the email stage
+          }
           break;
         case "waitingForInvestorOrStartup":
           if (inputMessage.toLowerCase() === "investor") {
@@ -158,9 +150,17 @@ const Chatbot = () => {
         case "waitingForInvestorType":
         case "waitingForStartupStage":
           botResponseText = "That's great! Do you have any questions for me?";
-          //setStage("waitingForQuestions");
-          setStage("awaitingQuestion");
-          break;
+          const botMessageWithButtons = {
+            role: "model",
+            parts: [{ text: botResponseText }],
+            buttons: [
+              { label: "Continue to chat with Zephyr", action: "continueChat", icon: "/assets/images/chat/zephyr.png" },
+              { label: "Talk to customer care on WhatsApp", action: "customerCare", icon: "/assets/images/chat/whatsapp.png" }
+            ]
+          };
+          setChatHistory((prevChatHistory) => [...prevChatHistory, botMessageWithButtons]);
+          setIsTyping(false);
+          return;
         case "waitingForQuestions":
           botResponseText = "Feel free to ask any questions you have.";
           setStage("awaitingQuestion");
@@ -171,17 +171,25 @@ const Chatbot = () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ messages: messagesHistory, question: inputMessage }),
           });
-    
+
           if (!response.ok) throw new Error('Network response was not ok');
           const data = await response.json();
           const lastEntry = data[data.length - 1];
           const parts = lastEntry.parts;
           botResponseText = parts[0]?.text || "Sorry, something went wrong.";
+
+          if (botResponseText.includes("{contact_info}")) {
+            botResponseText = botResponseText.replace(
+              "{contact_info}",
+              `<a href="https://wa.me/9818446004?text=Hello%2C%0AI%20Need%20an%20assistance%20from%20an%20Investment%20banker%20@Xellerates%20AI" target="_blank" style="color: blue; text-decoration: underline; padding: 2px 4px; ">Click Here to chat on WhatsApp</a>`
+            );
+          }
+
           break;
         default:
           botResponseText = "Sorry, I didn't understand that. Can you please rephrase?";
       }
-  
+
       const botMessage = { role: "model", parts: [{ text: botResponseText }] };
       setChatHistory((prevChatHistory) => [...prevChatHistory, botMessage]);
       setIsTyping(false);
@@ -194,7 +202,20 @@ const Chatbot = () => {
       scrollToBottom();
     }
   };
-  
+
+  const handleButtonClick = (action) => {
+    if (action === "continueChat") {
+      const thankYouMessage = {
+        role: "model",
+        parts: [{ text: "Thank you for choosing Zephyr. Please ask your question." }]
+      };
+      setChatHistory(prevChatHistory => [...prevChatHistory, thankYouMessage]);
+      setStage("awaitingQuestion");
+    } else if (action === "customerCare") {
+      window.open(`https://wa.me/9818446004?text=Hello%2C%0AI%20Need%20an%20assistance%20from%20an%20Investment%20banker%20@Xellerates%20AI`, "_blank");
+    }
+  };
+
   const handleKeyDown = (event) => {
     if (event.key === "Enter") {
       sendMessage(message);
@@ -211,102 +232,138 @@ const Chatbot = () => {
 
   const renderContent = () => {
     switch (activeTab) {
-      case "home":
-        return (
-          <HomeContent onSendMessageClick={() => setActiveTab("messages")} />
-        );
       case "messages":
         return (
           <div className="chatbot-messages">
             {chatHistory.map((msg, index) => (
-              <div
-                key={index}
-                style={{
-                  display: 'flex',
-                  justifyContent: msg.role === "user" ? 'flex-end' : 'flex-start',
-                  marginBottom: '10px',
-                  width: '100%'
-                }}
-              >
+              <div key={index} style={{ display: 'flex', flexDirection: 'column', marginBottom: '10px', width: '100%' }}>
                 {msg.parts.map((part, partIndex) => (
-                  <div
-                    key={partIndex}
-                    style={{
-                      padding: '12px 18px',
-                      borderRadius: '20px',
-                      maxWidth: '75%',
-                      wordBreak: 'break-word',
-                      fontSize: '14px',
-                      backgroundColor: msg.role === "user" ? '#4a90e2' : '#f7f7f7',
-                      color: msg.role === "user" ? '#fff' : '#333',
-                    }}
-                    dangerouslySetInnerHTML={{ __html: part.text }}
-                  >
-                    {/* {part.text} */}
+                  <div key={partIndex} style={{
+                    padding: '12px 18px',
+                    borderRadius: '20px',
+                    maxWidth: '75%',
+                    wordBreak: 'break-word',
+                    fontSize: '14px',
+                    backgroundColor: msg.role === "user" ? '#4a90e2' : '#f7f7f7',
+                    color: msg.role === "user" ? '#fff' : '#333',
+                    alignSelf: msg.role === "user" ? 'flex-end' : 'flex-start'
+                  }}>
+                    <div dangerouslySetInnerHTML={{ __html: part.text }} />
                   </div>
                 ))}
+
+                {msg.buttons && (
+                  <div className="chatbot-buttons-container">
+                    {msg.buttons.map((button, btnIndex) => (
+                      <button
+                        key={btnIndex}
+                        onClick={() => handleButtonClick(button.action)}
+                        className="chatbot-button"
+                      >
+                        {button.icon && <img src={button.icon} alt="" className="button-icon" />}
+                        {button.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
             {isTyping && (
-  <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '10px', width: '100%' }}>
-    <div style={{
-      padding: '12px 18px',
-      borderRadius: '20px',
-      maxWidth: '75%',
-      wordBreak: 'break-word',
-      fontSize: '14px',
-      backgroundColor: '#f7f7f7',
-      color: '#333',
-      display: 'flex',
-      alignItems: 'center'
-    }}>
-      <span style={{
-        width: '6px',
-        height: '6px',
-        margin: '0 1.5px',
-        backgroundColor: "rgb(78 78 78)",
-        borderRadius: '50%',
-        display: 'inline-block',
-        animation: 'bounce 1.2s infinite ease-in-out',
-        animationDelay: '0s',
-      }}></span>
-      <span style={{
-        width: '6px',
-        height: '6px',
-        margin: '0 1.5px',
-        backgroundColor: 'rgb(78 78 78)',
-        borderRadius: '50%',
-        display: 'inline-block',
-        animation: 'bounce 1.2s infinite ease-in-out',
-        animationDelay: '-0.16s'
-      }}></span>
-      <span style={{
-        width: '6px',
-        height: '6px',
-        margin: '0 1.5px',
-        backgroundColor: 'rgb(78 78 78)',
-        borderRadius: '50%',
-        display: 'inline-block',
-        animation: 'bounce 1.2s infinite ease-in-out',
-        animationDelay: '-0.32s'
-      }}></span>
-    </div>
-  </div>
-)}
+              <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '10px', width: '100%' }}>
+                <div style={{
+                  padding: '12px 18px',
+                  borderRadius: '20px',
+                  maxWidth: '75%',
+                  wordBreak: 'break-word',
+                  fontSize: '14px',
+                  backgroundColor: '#f7f7f7',
+                  color: '#333',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}>
+                  <span style={{
+                    width: '6px',
+                    height: '6px',
+                    margin: '0 1.5px',
+                    backgroundColor: "rgb(78 78 78)",
+                    borderRadius: '50%',
+                    display: 'inline-block',
+                    animation: 'bounce 1.2s infinite ease-in-out',
+                    animationDelay: '0s',
+                  }}></span>
+                  <span style={{
+                    width: '6px',
+                    height: '6px',
+                    margin: '0 1.5px',
+                    backgroundColor: 'rgb(78 78 78)',
+                    borderRadius: '50%',
+                    display: 'inline-block',
+                    animation: 'bounce 1.2s infinite ease-in-out',
+                    animationDelay: '-0.16s'
+                  }}></span>
+                  <span style={{
+                    width: '6px',
+                    height: '6px',
+                    margin: '0 1.5px',
+                    backgroundColor: 'rgb(78 78 78)',
+                    borderRadius: '50%',
+                    display: 'inline-block',
+                    animation: 'bounce 1.2s infinite ease-in-out',
+                    animationDelay: '-0.32s'
+                  }}></span>
+                </div>
+              </div>
+            )}
+            <style>
+              {`
+                @keyframes bounce {
+                  0%, 100% {
+                    transform: translateY(0);
+                  }
+                  50% {
+                    transform: translateY(-6px);
+                  }
+                }
 
-<style>
-{`
-  @keyframes bounce {
-    0%, 100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-6px);
-    }
-  }
-`}
-</style>
+                
+  .chatbot-buttons-container {
+  display: flex;
+  margin-top: 20px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
 
+.chatbot-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 2px;
+  background-color: #fff;
+  color: #4a90e2;
+  border: 1px solid #4a90e2;
+  border-radius: 15px;
+  cursor: pointer;
+  width: 40%;
+  font-size: 12px;
+  transition: background-color 0.3s ease;
+  margin-right: 5px;
+  margin-left: 5px;
+}
+
+.chatbot-button:hover {
+  background-color: #4a90e2;
+  color: #fff;
+}
+
+.button-icon {
+  width: 25px;
+  height: 25px;
+  margin-left: 3px;
+  margin-right: 5px;
+
+}
+              `}
+            </style>
             <div ref={messageEndRef} />
           </div>
         );
@@ -320,227 +377,303 @@ const Chatbot = () => {
         );
     }
   };
-  
-  
 
   return (
-    
     <>
-  <div className="chatbot-icon" onClick={toggleChatbot}>
-    <img src="/assets/images/dashboard/chatbot2.png" alt="Chatbot Icon" />
-  </div>
-  {isOpen && (
-    <div className="chatbot-container">
-      <div className="chatbot-header">
-        <img
-          src="/assets/images/dashboard/Zephyr.gif"
-          alt="Zephyr"
-          className="header-image-full"
-        />
-        <button className="close-btn" onClick={toggleChatbot}>
-          ×
-        </button>
-      </div>
-      <div className="chatbot-messages">{renderContent()}</div>
-
-      {activeTab === "messages" && (
-        <div className="chatbot-input">
-          <input
-            type="text"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Enter your message..."
-          />
-          <button onClick={() => sendMessage(message)}>Send</button>
+      {!isOpen && isMessageBoxOpen && (
+        <div className="message-box">
+          <div>
+            <div className="message-header">
+              <span className="message-text">
+                Welcome to Xellerates AI!
+                <br></br>
+              </span>
+              <span className="message-text">
+                Global platform for startups to be investment ready through our AI model
+                <br></br>
+              </span>
+              <span className="message-subtext">
+                How can we help you? Feel free to ask anything.
+              </span>
+              <button className="close-btn1" onClick={() => setIsMessageBoxOpen(false)}>×</button>
+            </div>
+            <div className="message-input-box">
+              <input
+                type="text"
+                placeholder="Enter your message..."
+                value={messageBoxInput}
+                onClick={handleInputClick}
+                onChange={(e) => setMessageBoxInput(e.target.value)}
+              />
+            </div>
+          </div>
+        
         </div>
+      
       )}
 
-      <div className="chatbot-footer">
-        <button
-          onClick={() => setActiveTab("home")}
-          className={activeTab === "home" ? "active" : ""}
-        >
-          <FaHome size={24} />
-          <span>Home</span>
-        </button>
-        <button
-          onClick={() => setActiveTab("messages")}
-          className={activeTab === "messages" ? "active" : ""}
-        >
-          <FaComments size={24} />
-          <span>Messages</span>
-        </button>
-        <button
-          onClick={() => setActiveTab("help")}
-          className={activeTab === "help" ? "active" : ""}
-        >
-          <FaQuestionCircle size={24} />
-          <span>Help</span>
-        </button>
-        <button
-          onClick={() => setActiveTab("news")}
-          className={activeTab === "news" ? "active" : ""}
-        >
-          <FaNewspaper size={24} />
-          <span>News</span>
-        </button>
+      <div className="chatbot-icon" onClick={toggleChatbot}>
+        <img src="/assets/images/dashboard/chatbot2.png" alt="Chatbot Icon" />
       </div>
-    </div>
-  )}
-  <style jsx>{`
-    .chatbot-icon {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      width: 80px;
-      height: 80px;
-      cursor: pointer;
-      z-index: 1000;
-    }
-    .chatbot-icon img {
-      width: 100%;
-      height: 100%;
-    }
-    .chatbot-container {
-      position: fixed;
-      bottom: 100px;
-      right: 20px;
-      width: 350px;
-      height: 600px;
-      background-color: #fff;
-      border-radius: 8px;
-      display: flex;
-      flex-direction: column;
-      z-index: 1000;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      border: 1px solid #e0e0e0;
-    }
-    .chatbot-header {
-      background-color: #4a90e2;
-      color: #fff;
-      padding: 0;
-      position: relative;
-      border-top-left-radius: 8px;
-      border-top-right-radius: 8px;
-      height: 100px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-    }
-    .header-image-full {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .close-btn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: none;
-      border: none;
-      color: white;
-      font-size: 20px;
-      cursor: pointer;
-    }
-    .chatbot-messages {
-      flex: 1;
-      padding: 15px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-    }
-.message-container {
+
+      {isOpen && (
+        <div className="chatbot-container">
+          <div className="chatbot-header">
+            <img
+              src="/assets/images/dashboard/Zephyr.gif"
+              alt="Zephyr"
+              className="header-image-full"
+            />
+            <button className="close-btn" onClick={toggleChatbot}>
+              ×
+            </button>
+          </div>
+          <div className="chatbot-messages">{renderContent()}</div>
+
+          {activeTab === "messages" && (
+            <div className="chatbot-input">
+              <input
+                type="text"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Enter your message..."
+              />
+              <button onClick={() => sendMessage(message)}>Send</button>
+            </div>
+          )}
+
+          <div className="chatbot-footer">
+            <button
+              onClick={() => setActiveTab("home")}
+              className={activeTab === "home" ? "active" : ""}
+            >
+              <FaHome size={24} />
+              <span>Home</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("messages")}
+              className={activeTab === "messages" ? "active" : ""}
+            >
+              <FaComments size={24} />
+              <span>Messages</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("help")}
+              className={activeTab === "help" ? "active" : ""}
+            >
+              <FaQuestionCircle size={24} />
+              <span>Help</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("news")}
+              className={activeTab === "news" ? "active" : ""}
+            >
+              <FaNewspaper size={24} />
+              <span>News</span>
+            </button>
+          </div>
+        </div>
+      )}
+      <style jsx>{`
+.message-box {
+  position: fixed;
+  bottom: 120px;
+  right: 20px;
+  width: 350px;
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  padding: 20px;
+  border: 1px solid #e0e0e0;
+}
+
+.message-header {
+  position: relative;
+  margin-bottom: 15px;
+}
+
+.message-text {
+  display: block;
+  font-size: 16px;
+  font-weight: 500;
+  color: #333333;
+  margin-bottom: 15px;
+}
+
+.message-subtext {
+  display: block;
+  font-size: 16px;
+  font-weight: 500;
+  color: #333333;
+  margin-bottom: 12px;
+}
+
+.message-input-box {
   display: flex;
-  margin-bottom: 10px;
-  width: 100%;
+  align-items: center;
+  background-color: #f9f9f9;
+  border-radius: 25px;
+  padding: 2px 15px;
+  border: 1px solid #ddd;
 }
 
-.user-message {
-  justify-content: flex-end;
-}
-
-.bot-message {
-  justify-content: flex-start;
-}
-
-.message {
-  padding: 12px 18px;
-  border-radius: 20px;
-  max-width: 75%;
-  word-break: break-word;
+.message-input-box input {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 25px;
   font-size: 14px;
+  background-color: transparent;
+  outline: none;
 }
 
-.message.user {
-  background-color: #4a90e2;
-  color: #fff;
+.close-btn1 {
+  position: absolute;
+  top: -15px;
+  right: -10px;
+  background: none;
+  border: none;
+  color: #131313;
+  font-size: 20px;
+  cursor: pointer;
 }
 
-.message.model {
-  background-color: #f7f7f7;
-  color: #333;
+.close-btn1:hover {
+  color: #333333;
 }
 
-    .chatbot-input {
-      display: flex;
-      padding: 10px;
-      border-top: 1px solid #e0e0e0;
-      background-color: #f7f7f7;
-      color: #333;
-    }
-    .chatbot-input input {
-      flex: 1;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 25px;
-      margin-right: 10px;
-      font-size: 14px;
-    }
-    .chatbot-input button {
-      padding: 10px 15px;
-      background-color: #4a90e2;
-      color: white;
-      border: none;
-      border-radius: 25px;
-      cursor: pointer;
-    }
-    .chatbot-footer {
-      display: flex;
-      border-top: 1px solid #e0e0e0;
-      background-color: #f7f7f7;
-    }
-    .chatbot-footer button {
-      flex: 1;
-      padding: 10px;
-      background: none;
-      border: none;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: rgb(71 85 105);
-    }
-    .chatbot-footer button.active {
-      background-color: #4a90e2;
-      color: rgb(71 85 105);
-    }
-    .chatbot-footer button:hover {
-      background-color: #007bff;
-      color: white;
-    }
-    .chatbot-footer button span {
-      font-size: 12px;
-    }
 
-  `}</style>
-</>
+.chatbot-icon {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 80px;
+  height: 80px;
+  cursor: pointer;
+  z-index: 1000;
+  transition: transform 0.3s ease;
+}
+
+.chatbot-icon img {
+  width: 100%;
+  height: 100%;
+}
+
+.chatbot-icon:hover {
+  transform: scale(1.05);
+}
 
 
+        .chatbot-container {
+          position: fixed;
+          bottom: 100px;
+          right: 20px;
+          width: 350px;
+          height: 600px;
+          background-color: #fff;
+          border-radius: 8px;
+          display: flex;
+          flex-direction: column;
+          z-index: 1000;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+          border: 1px solid #e0e0e0;
+        }
+
+        .chatbot-header {
+          background-color: #4a90e2;
+          color: #fff;
+          padding: 0;
+          position: relative;
+          border-top-left-radius: 8px;
+          border-top-right-radius: 8px;
+          height: 100px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+        }
+
+        .header-image-full {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .close-btn {
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          background: none;
+          border: none;
+          color: white;
+          font-size: 20px;
+          cursor: pointer;
+        }
+
+        .chatbot-messages {
+          flex: 1;
+          padding: 15px;
+          overflow-y: auto;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .chatbot-input {
+          display: flex;
+          padding: 10px;
+          border-top: 1px solid #e0e0e0;
+          background-color: #f7f7f7;
+          color: #333;
+        }
+
+        .chatbot-input input {
+          flex: 1;
+          padding: 10px;
+          border: 1px solid #ccc;
+          border-radius: 25px;
+          margin-right: 10px;
+          font-size: 14px;
+        }
+
+        .chatbot-footer {
+          display: flex;
+          border-top: 1px solid #e0e0e0;
+          background-color: #f7f7f7;
+        }
+
+        .chatbot-footer button {
+          flex: 1;
+          padding: 10px;
+          background: none;
+          border: none;
+          cursor: pointer;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          color: rgb(71 85 105);
+        }
+
+        .chatbot-footer button.active {
+          background-color: #4a90e2;
+          color: rgb(71 85 105);
+        }
+
+        .chatbot-footer button:hover {
+          background-color: #007bff;
+          color: white;
+        }
+
+        .chatbot-footer button span {
+          font-size: 12px;
+        }
+      `}</style>
+    </>
   );
 };
+
 
 const HomeContent = ({ onSendMessageClick }) => {
   const [expandedBlog, setExpandedBlog] = useState(null);
