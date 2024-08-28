@@ -945,32 +945,81 @@ const NewsContent = () => {
   };
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-lg">
-      <h2 className="text-3xl font-bold text-blue-600 mb-4">Latest News</h2>
+    <div className="container">
+      <style jsx>{`
+        .container {
+          background-color: white;
+          padding: 1rem;
+          border-radius: 0.5rem;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .heading {
+          font-size: 1.875rem; /* text-3xl */
+          font-weight: 700; /* font-bold */
+          color: #2563eb; /* text-blue-600 */
+          margin-bottom: 1rem; /* mb-4 */
+        }
+        .loading-text {
+          color: #4b5563; /* text-gray-600 */
+        }
+        .article-container {
+          background-color: #f3f4f6; /* bg-gray-100 */
+          padding: 1rem; /* p-4 */
+          border-radius: 0.5rem; /* rounded-lg */
+          margin-bottom: 1rem; /* mb-4 */
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* shadow-md */
+        }
+        .article-title {
+          font-size: 1.125rem; /* text-lg */
+          font-weight: 600; /* font-semibold */
+          color: #1f2937; /* text-gray-800 */
+          margin-bottom: 0.5rem; /* mb-2 */
+        }
+        .summary-list {
+          list-style-type: disc; /* list-disc */
+          padding-left: 1.25rem; /* pl-5 */
+          color: #374151; /* text-gray-700 */
+        }
+        .list-item {
+          margin-bottom: 0.25rem; /* mb-1 */
+        }
+        .toggle-button {
+          display: inline-block; /* inline-block */
+          color: #2563eb; /* text-blue-600 */
+          border-radius: 9999px; /* rounded-full */
+          transition: all 0.3s; /* transition duration-300 */
+          cursor: pointer;
+        }
+        .toggle-button:hover {
+          text-decoration: underline; /* hover:underline */
+        }
+      `}</style>
+
+      <h2 className="heading">Latest News</h2>
       {loading ? (
-        <p className="text-gray-600">Loading news...</p>
+        <p className="loading-text">Loading news...</p>
       ) : (
         news.map((article, index) => {
           const isExpanded = expandedIndexes.includes(index);
 
           return (
-            <div key={index} className="bg-gray-100 p-4 rounded-lg mb-4 shadow-md">
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">{article.title}</h3>
-              <ul className="list-disc pl-5 text-gray-700">
+            <div key={index} className="article-container">
+              <h3 className="article-title">{article.title}</h3>
+              <ul className="summary-list">
                 {article.summary.slice(0, 1).map((point, idx) => {
                   const words = point.split(' ');
                   const isMoreThan30Words = words.length > 30;
                   return (
-                    <li key={idx} className="mb-1">
+                    <li key={idx} className="list-item">
                       {expandedIndexes.includes(index)
                         ? point // Show full content if expanded
                         : words.slice(0, 30).join(' ') + (isMoreThan30Words ? '...' : '')} {/* Show truncated content if not expanded */}
-            
+
                       {/* Conditionally render the button if text is more than 30 words */}
                       {isMoreThan30Words && (
                         <button
                           onClick={() => toggleExpansion(index)}
-                          className="inline-block text-blue-600 transition duration-300 hover:underline"
+                          className="toggle-button"
                         >
                           {expandedIndexes.includes(index) ? 'Read less...' : 'Read more...'}
                         </button>
@@ -980,7 +1029,6 @@ const NewsContent = () => {
                 })}
               </ul>
             </div>
-
           );
         })
       )}
